@@ -1,7 +1,7 @@
 ﻿using System.Diagnostics;
+using System.Resources;
 using System.Runtime.InteropServices;
 using System.ServiceProcess;
-using Windows.Data.Xml.Dom;
 using Windows.UI.Notifications;
 
 
@@ -9,18 +9,18 @@ namespace MemoryRestriction
 {
     public class MemoryLimitService : ServiceBase
     {
-#pragma warning disable CA1416 // Проверка совместимости платформы
+#pragma warning disable CA1416
         private const long MEMORY_LIMIT = 200 * 1024 * 1024; // 200 MB
         private const string PROCESS_NAME = "AdGuardVpnSvc";
         private const string PROCESS_PATH = "C:\\Program Files\\AdGuardVpn\\AdGuardVpnSvc.exe";
-        private const short MY_EVENT_CATEGORY_ID = 322;
         private Thread monitorThread;
         private bool isRunning = true;
-
+        private readonly ResourceManager RM;
         private new readonly EventLog EventLog;
-        public MemoryLimitService() : base()
+        public MemoryLimitService(ResourceManager resourceManager) : base()
         {
-            // Убедитесь, что создаем источник события только один раз
+            RM = resourceManager;
+
             if (!EventLog.SourceExists("Memory Limit Service"))
             {
                 EventLog.CreateEventSource("Memory Limit Service", "MemoryLimit");
@@ -85,15 +85,15 @@ namespace MemoryRestriction
             isRunning = true;
             monitorThread = new Thread(MonitorProcess) { IsBackground = true };
             monitorThread.Start();
-            EventLog.WriteEntry("MemoryLimitService запущена.");
+            EventLog.WriteEntry(RM.GetString("ServiceStarted"));
         }
 
         protected override void OnStop()
         {
             isRunning = false;
             monitorThread?.Join();
-            EventLog.WriteEntry("MemoryLimitService остановлена.");
-            ShowWindowsNotification("AdGuard VPN", "Служба была остановлена.");
+            EventLog.WriteEntry(RM.GetString("ServiceStopped"));
+            ShowWindowsNotification(RM.GetString("SerivceStoppedNotify"));
         }
 
         private void MonitorProcess()
@@ -106,7 +106,7 @@ namespace MemoryRestriction
 
                     if (process == null)
                     {
-                        EventLog.WriteEntry($"Процесс {PROCESS_NAME} не найден, перезапускаем...");
+                        EventLog.WriteEntry(string.Format(RM.GetString("ProcessNotFound"), PROCESS_NAME));
                         RestartProcess();
                         Thread.Sleep(15000);
                         continue;
@@ -115,13 +115,13 @@ namespace MemoryRestriction
                     nint hJob = CreateJobObject(nint.Zero, null);
                     if (hJob == nint.Zero)
                     {
-                        EventLog.WriteEntry("Ошибка создания Job Object!");
+                        EventLog.WriteEntry(RM.GetString("ErrorCreating"));
                         return;
                     }
 
                     if (!AssignProcessToJobObject(hJob, process.Handle))
                     {
-                        EventLog.WriteEntry("Ошибка назначения процесса в Job Object!");
+                        EventLog.WriteEntry(RM.GetString("ErrorAssigning"));
                         return;
                     }
 
@@ -131,11 +131,11 @@ namespace MemoryRestriction
 
                     if (!SetInformationJobObject(hJob, JobObjectExtendedLimitInformation, ref jobInfo, (uint)Marshal.SizeOf(typeof(JOBOBJECT_EXTENDED_LIMIT_INFORMATION))))
                     {
-                        EventLog.WriteEntry("Ошибка установки ограничения памяти!");
+                        EventLog.WriteEntry(RM.GetString("ErrorRamSetting"));
                         return;
                     }
 
-                    EventLog.WriteEntry($"Ограничение памяти для {PROCESS_NAME} установлено.");
+                    EventLog.WriteEntry(string.Format(RM.GetString("SetLimit"), PROCESS_NAME));
 
                     while (!process.HasExited && isRunning)
                     {
@@ -144,9 +144,9 @@ namespace MemoryRestriction
 
                         if (memoryUsage > MEMORY_LIMIT)
                         {
-                            string message = $"Превышен лимит памяти! ({memoryUsage / (1024 * 1024)} MB). Перезапускаем процесс...";
+                            string message = string.Format(RM.GetString("LimitExceeded"), memoryUsage / (1024 * 1024));
                             EventLog.WriteEntry(message);
-                            ShowWindowsNotification("AdGuard VPN", message);
+                            ShowWindowsNotification(message);
                             process.Kill();
                             process.WaitForExit();
                             RestartProcess();
@@ -157,9 +157,9 @@ namespace MemoryRestriction
                     }
                 }
             }
-            catch(Exception ex)
+            catch (Exception ex)
             {
-                EventLog.WriteEntry("Возникло исключение: " + ex.Message + Environment.NewLine + ex.StackTrace?.ToString(),EventLogEntryType.Error);
+                EventLog.WriteEntry(RM.GetString("Exception") + ex.Message + Environment.NewLine + ex.StackTrace?.ToString(), EventLogEntryType.Error);
             }
         }
 
@@ -177,20 +177,20 @@ namespace MemoryRestriction
             try
             {
                 Process.Start(PROCESS_PATH);
-                EventLog.WriteEntry($"Запускаем процесс {PROCESS_NAME}.");
+                EventLog.WriteEntry(string.Format(RM.GetString("StartingProcess"), PROCESS_NAME));
             }
             catch (Exception ex)
             {
-                ShowWindowsNotification("AdGuard VPN", "Служба была остановлена.");
-                EventLog.WriteEntry($"Ошибка при запуске процесса {PROCESS_NAME}: {ex.Message}");
+                ShowWindowsNotification("Служба была остановлена.");
+                EventLog.WriteEntry(string.Format(RM.GetString("ErrorStartingProcess"), PROCESS_NAME, ex.Message));
             }
         }
 
-        private void ShowWindowsNotification(string title, string message)
+        private void ShowWindowsNotification(string message)
         {
             var toastXml = ToastNotificationManager.GetTemplateContent(ToastTemplateType.ToastText02);
             var textElements = toastXml.GetElementsByTagName("text");
-            textElements[0].AppendChild(toastXml.CreateTextNode(title));
+            textElements[0].AppendChild(toastXml.CreateTextNode(PROCESS_NAME));
             textElements[1].AppendChild(toastXml.CreateTextNode(message));
 
             var toast = new ToastNotification(toastXml);

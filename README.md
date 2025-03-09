@@ -1,7 +1,7 @@
 ### Configuration
 * To set the RAM limit, modify the **MEMORY_LIMIT** constant.
 * The path to the target application is defined in the **PROCESS_PATH** constant.
-* **PROCESS_NAME** is used for logging.
+* **PROCESS_NAME** is used for searching process and logging.
 ### Add Service
 1. Publish project
 2. Create Service in Power Shell 7+ (<code>Install-Module -Name Microsoft.PowerShell.Management -Force -Scope CurrentUser</code> for start, stop, remove needed)

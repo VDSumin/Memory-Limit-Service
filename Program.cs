@@ -1,6 +1,7 @@
 ﻿using MemoryRestriction;
-using System.Diagnostics;
+using System.Resources;
 using System.ServiceProcess;
 
-ServiceBase.Run(new MemoryLimitService());
+var resourceManager = new ResourceManager("MemoryRestriction.Properties.Resources.Resources", typeof(Program).Assembly);
 
+ServiceBase.Run(new MemoryLimitService(resourceManager));
