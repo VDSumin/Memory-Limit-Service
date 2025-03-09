@@ -6,7 +6,7 @@
 1. Publish project
 2. Create Service in Power Shell 7+ (<code>Install-Module -Name Microsoft.PowerShell.Management -Force -Scope CurrentUser</code> for start, stop, remove needed)
 ```
-  New-Service -Name "Memory Limit Service" -Binary ".\bin\Release\net8.0\publish\win-x64\MemoryRestriction.exe" -StartupType Automatic
+  New-Service -Name "Memory Limit Service" -Binary "full-path-to-exe\MemoryRestriction.exe" -StartupType Automatic
   Start-Service -Name "Memory Limit Service"
 ```
 ### Remove Service
