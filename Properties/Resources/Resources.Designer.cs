@@ -88,7 +88,7 @@ namespace MemoryRestriction.Properties.Resources {
         }
         
         /// <summary>
-        ///   Ищет локализованную строку, похожую на Ошибка при запуске процесса {PROCESS_NAME}: {message}.
+        ///   Ищет локализованную строку, похожую на Ошибка при запуске процесса {0}: {1}.
         /// </summary>
         internal static string ErrorStartingProcess {
             get {
@@ -106,7 +106,7 @@ namespace MemoryRestriction.Properties.Resources {
         }
         
         /// <summary>
-        ///   Ищет локализованную строку, похожую на Превышен лимит памяти! ({limit} MB). Перезапускаем процесс....
+        ///   Ищет локализованную строку, похожую на Превышен лимит памяти! ({0} MB). Перезапускаем процесс....
         /// </summary>
         internal static string LimitExceeded {
             get {
@@ -115,7 +115,7 @@ namespace MemoryRestriction.Properties.Resources {
         }
         
         /// <summary>
-        ///   Ищет локализованную строку, похожую на Процесс {PROCESS_NAME} не найден, перезапускаем....
+        ///   Ищет локализованную строку, похожую на Процесс {0} не найден, перезапускаем....
         /// </summary>
         internal static string ProcessNotFound {
             get {
@@ -151,7 +151,7 @@ namespace MemoryRestriction.Properties.Resources {
         }
         
         /// <summary>
-        ///   Ищет локализованную строку, похожую на Ограничение памяти для {PROCESS_NAME} установлено..
+        ///   Ищет локализованную строку, похожую на Ограничение памяти для {0} установлено..
         /// </summary>
         internal static string SetLimit {
             get {
@@ -160,7 +160,7 @@ namespace MemoryRestriction.Properties.Resources {
         }
         
         /// <summary>
-        ///   Ищет локализованную строку, похожую на Запускаем процесс {PROCESS_NAME}..
+        ///   Ищет локализованную строку, похожую на Запускаем процесс {0}..
         /// </summary>
         internal static string StartingProcess {
             get {

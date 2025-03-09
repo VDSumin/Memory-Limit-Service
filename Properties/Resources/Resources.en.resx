@@ -127,16 +127,16 @@
     <value>Error setting memory limit!</value>
   </data>
   <data name="ErrorStartingProcess" xml:space="preserve">
-    <value>Error starting the process {PROCESS_NAME}: {ex.Message}</value>
+    <value>Error starting the process {0}: {1}</value>
   </data>
   <data name="Exception" xml:space="preserve">
     <value>An exception occurred: </value>
   </data>
   <data name="LimitExceeded" xml:space="preserve">
-    <value>Memory limit exceeded! ({memoryUsage} MB). Restarting the process...</value>
+    <value>Memory limit exceeded! ({0} MB). Restarting the process...</value>
   </data>
   <data name="ProcessNotFound" xml:space="preserve">
-    <value>Process {PROCESS_NAME} not found, restarting...</value>
+    <value>Process {0} not found, restarting...</value>
   </data>
   <data name="SerivceStoppedNotify" xml:space="preserve">
     <value>The service has been stopped.</value>
@@ -148,9 +148,9 @@
     <value>MemoryLimitService stopped.</value>
   </data>
   <data name="SetLimit" xml:space="preserve">
-    <value>Memory limit for {PROCESS_NAME} has been set.</value>
+    <value>Memory limit for {0} has been set.</value>
   </data>
   <data name="StartingProcess" xml:space="preserve">
-    <value>Starting the process {PROCESS_NAME}.</value>
+    <value>Starting the process {0}.</value>
   </data>
 </root>
