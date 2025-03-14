@@ -10,7 +10,7 @@ namespace MemoryRestriction
     public class MemoryLimitService : ServiceBase
     {
 #pragma warning disable CA1416
-        private const long MEMORY_LIMIT = 200 * 1024 * 1024; // 200 MB
+        private const long MEMORY_LIMIT = 250 * 1024 * 1024; // 200 MB
         private const string PROCESS_NAME = "AdGuardVpnSvc";
         private const string PROCESS_PATH = "C:\\Program Files\\AdGuardVpn\\AdGuardVpnSvc.exe";
         private Thread monitorThread;
@@ -159,7 +159,9 @@ namespace MemoryRestriction
             }
             catch (Exception ex)
             {
-                EventLog.WriteEntry(RM.GetString("Exception") + ex.Message + Environment.NewLine + ex.StackTrace?.ToString(), EventLogEntryType.Error);
+                string message = RM.GetString("Exception") + ex.GetType().ToString() + Environment.NewLine + ex.Message;
+                EventLog.WriteEntry(message + ex.StackTrace?.ToString(), EventLogEntryType.Error);
+                ShowWindowsNotification(message);
             }
         }
 
