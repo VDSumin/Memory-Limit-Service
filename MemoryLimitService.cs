@@ -159,12 +159,23 @@ namespace MemoryRestriction
                         }
                     }
             }
+            catch (InvalidOperationException ex)
+            {
+                WriteException(ex);
+                Thread.Sleep(10000);
+                MonitorProcess();
+            }
             catch (Exception ex)
+            {
+                WriteException(ex);
+                MonitorProcess();
+            }
+
+            void WriteException(Exception ex)
             {
                 string message = RM.GetString("Exception") + ex.GetType().ToString() + Environment.NewLine + ex.Message;
                 EventLog.WriteEntry(message + ex.StackTrace?.ToString(), EventLogEntryType.Error);
                 ShowWindowsNotification(message);
-                MonitorProcess();
             }
         }
 
