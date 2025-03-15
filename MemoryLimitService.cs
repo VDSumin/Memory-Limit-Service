@@ -162,6 +162,7 @@ namespace MemoryRestriction
                 string message = RM.GetString("Exception") + ex.GetType().ToString() + Environment.NewLine + ex.Message;
                 EventLog.WriteEntry(message + ex.StackTrace?.ToString(), EventLogEntryType.Error);
                 ShowWindowsNotification(message);
+                MonitorProcess();
             }
         }
 
