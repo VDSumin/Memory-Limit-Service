@@ -11,6 +11,7 @@ namespace MemoryRestriction
     {
 #pragma warning disable CA1416
         private const long MEMORY_LIMIT = 250 * 1024 * 1024; // 200 MB
+        private const string MASTER_PROCESS_NAME = "AdGuardVpn";
         private const string PROCESS_NAME = "AdGuardVpnSvc";
         private const string PROCESS_PATH = "C:\\Program Files\\AdGuardVpn\\AdGuardVpnSvc.exe";
         private Thread monitorThread;
@@ -100,62 +101,63 @@ namespace MemoryRestriction
         {
             try
             {
-                while (isRunning)
-                {
-                    Process process = FindProcess(PROCESS_NAME);
-
-                    if (process == null)
+                if (string.IsNullOrEmpty(MASTER_PROCESS_NAME) || IsMasterProcessStarted())
+                    while (isRunning)
                     {
-                        EventLog.WriteEntry(string.Format(RM.GetString("ProcessNotFound"), PROCESS_NAME));
-                        RestartProcess();
-                        Thread.Sleep(15000);
-                        continue;
-                    }
+                        Process process = FindProcess(PROCESS_NAME);
 
-                    nint hJob = CreateJobObject(nint.Zero, null);
-                    if (hJob == nint.Zero)
-                    {
-                        EventLog.WriteEntry(RM.GetString("ErrorCreating"));
-                        return;
-                    }
-
-                    if (!AssignProcessToJobObject(hJob, process.Handle))
-                    {
-                        EventLog.WriteEntry(RM.GetString("ErrorAssigning"));
-                        return;
-                    }
-
-                    JOBOBJECT_EXTENDED_LIMIT_INFORMATION jobInfo = new();
-                    jobInfo.BasicLimitInformation.LimitFlags = JOB_OBJECT_LIMIT_PROCESS_MEMORY;
-                    jobInfo.ProcessMemoryLimit = MEMORY_LIMIT;
-
-                    if (!SetInformationJobObject(hJob, JobObjectExtendedLimitInformation, ref jobInfo, (uint)Marshal.SizeOf(typeof(JOBOBJECT_EXTENDED_LIMIT_INFORMATION))))
-                    {
-                        EventLog.WriteEntry(RM.GetString("ErrorRamSetting"));
-                        return;
-                    }
-
-                    EventLog.WriteEntry(string.Format(RM.GetString("SetLimit"), PROCESS_NAME));
-
-                    while (!process.HasExited && isRunning)
-                    {
-                        process.Refresh();
-                        long memoryUsage = process.WorkingSet64;
-
-                        if (memoryUsage > MEMORY_LIMIT)
+                        if (process == null)
                         {
-                            string message = string.Format(RM.GetString("LimitExceeded"), memoryUsage / (1024 * 1024));
-                            EventLog.WriteEntry(message);
-                            ShowWindowsNotification(message);
-                            process.Kill();
-                            process.WaitForExit();
+                            EventLog.WriteEntry(string.Format(RM.GetString("ProcessNotFound"), PROCESS_NAME));
                             RestartProcess();
-                            break;
+                            Thread.Sleep(15000);
+                            continue;
                         }
 
-                        Thread.Sleep(5000);
+                        nint hJob = CreateJobObject(nint.Zero, null);
+                        if (hJob == nint.Zero)
+                        {
+                            EventLog.WriteEntry(RM.GetString("ErrorCreating"));
+                            return;
+                        }
+
+                        if (!AssignProcessToJobObject(hJob, process.Handle))
+                        {
+                            EventLog.WriteEntry(RM.GetString("ErrorAssigning"));
+                            return;
+                        }
+
+                        JOBOBJECT_EXTENDED_LIMIT_INFORMATION jobInfo = new();
+                        jobInfo.BasicLimitInformation.LimitFlags = JOB_OBJECT_LIMIT_PROCESS_MEMORY;
+                        jobInfo.ProcessMemoryLimit = MEMORY_LIMIT;
+
+                        if (!SetInformationJobObject(hJob, JobObjectExtendedLimitInformation, ref jobInfo, (uint)Marshal.SizeOf(typeof(JOBOBJECT_EXTENDED_LIMIT_INFORMATION))))
+                        {
+                            EventLog.WriteEntry(RM.GetString("ErrorRamSetting"));
+                            return;
+                        }
+
+                        EventLog.WriteEntry(string.Format(RM.GetString("SetLimit"), PROCESS_NAME));
+
+                        while (!process.HasExited && isRunning)
+                        {
+                            process.Refresh();
+                            long memoryUsage = process.WorkingSet64;
+
+                            if (memoryUsage > MEMORY_LIMIT)
+                            {
+                                string message = string.Format(RM.GetString("LimitExceeded"), memoryUsage / (1024 * 1024));
+                                EventLog.WriteEntry(message);
+                                ShowWindowsNotification(message);
+                                process.Kill();
+                                process.WaitForExit();
+                                RestartProcess();
+                                break;
+                            }
+
+                            Thread.Sleep(5000);
+                        }
                     }
-                }
             }
             catch (Exception ex)
             {
@@ -166,6 +168,16 @@ namespace MemoryRestriction
             }
         }
 
+        private bool IsMasterProcessStarted()
+        {
+            while (isRunning)
+            {
+                Process process = FindProcess(MASTER_PROCESS_NAME);
+                if (process != null) return true;
+                Thread.Sleep(TimeSpan.FromMinutes(2));
+            }
+            return false;
+        }
         private Process FindProcess(string name)
         {
             foreach (Process process in Process.GetProcessesByName(name))
